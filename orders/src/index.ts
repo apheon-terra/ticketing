@@ -34,7 +34,7 @@ import { PaymentCreatedListener } from './events/listeners/payment-created-liste
 
 //connect to db
 const start = async () => {
-    console.log('starting..');
+    console.log('starting....');
     //from nats depl yaml
     if (!process.env.JWT_KEY) {
         throw new Error('JWT_KEY must be defined');
