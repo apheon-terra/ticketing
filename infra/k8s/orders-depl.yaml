@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: orders
+          image: eu.gcr.io/ticketing-dev-296116/orders
+          env: 
+            - name: NATS_URL
+              value: 'http://nats-srv:4222'
+            - name: NATS_CLUSTER_ID
+              value: 'ticketing'
+            - name: NATS_CLIENT_ID # unique 
+              valueFrom: # unique solution
+                fieldRef:
+                  fieldPath: metadata.name # match the id of the client to an actual running copy of our ticket services , name of the pod as a solution
+            - name: MONGO_URI
+              value: 'mongodb://orders-mongo-srv:27017/orders' # hardcoded URI
+            - name: JWT_KEY #INSIDE OF orders APP
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+                  #If you load in scaffold some uncofig secret key kube wont load the pod
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-srv
+spec:
+  selector:
+    app: orders
+  ports:
+    - name: orders
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

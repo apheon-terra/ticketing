@@ -1,0 +1,6 @@
+export const stripe = {
+    charges: {
+        create: jest.fn().mockResolvedValue({}),//return a promise that automatically resolves itself with an empty object
+        //when we call create we are getting back some kind of promise and that we are awaiting that promise to be resolved, so we do same behavior with mockResolvedValue
+    },
+};//fake copy of stripe in test mode

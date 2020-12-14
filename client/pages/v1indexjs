@@ -1,0 +1,118 @@
+/*export default () => {
+    return <hi>landing Page</hi>;
+}
+// v1
+const LandingPage = () => {
+    console.log(color);
+    return <h1>  Landing Page  </h1>;
+}
+
+//getInitialProps specific to NEXTjs  fetching props basically cruccial executed on server no reqeuest during rendering 
+
+// no data loading inside componenets when we render a component with next
+//v1
+LandingPage.getInitialProps = () => {
+    console.log('i am on the server');
+    return {color:'red'};//this empty obj will load as props on the landing page
+}
+*/
+
+
+
+
+//v2
+/*import axiso from 'axios'
+
+
+//executed on the browser
+const LandingPage = ({currentUser}) => {
+    console.log(currentUser);//axiso work here 
+    
+    // when we do the axios get from the browser 
+    axiso.get('api/users/currentuser');
+    // even thouh we have only the route the browser will asume and complete with previous domain , the route passes throuh some netwrk layer that translates the browsers completionticketing.dev with localhost:80/api/users.. this path hits ngnix forwards to auth and everithin works
+    return <h1>  Landing Page  </h1>;
+}
+//getinitial ... exectued on the server
+LandingPage.getInitialProps = ({ req}) => {
+    
+    console.log(req.headers);//contains as properties also the cookie dump, cool so we take this and pass it allong m down below to axios as opt object 
+
+    // console.log('i am on the server');
+    // const response = await axiso.get('api/users/currentuser');//axiso does not work here
+    //  ..making the request from the server
+    //node http layer works like browser , sees no domain , will make a request with completion localhost:80/api/users...
+    //but the applicaton does not run on our local but in a container on a server , it does not hit the ngnix from outside like the browser and its not running anythign on port 80 on that container hence the error connection refuse 127.. :80
+
+    if (typeof window === 'undefined')
+    {
+        //we are on the server !
+        //htp:// ingress-ngix.ngix/api.....
+        //v1
+        // const { data } = await axios.get('http://SERVICENAME.NAMESPACE.svc.cluster.local');
+        // const { data } = await axios.get('http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/users/currentuser', {
+        //     headers: {
+        //         Host: 'ticketing.dev'
+        //     }
+        // });//this hits nginx but fails on 404 because it does not know the domain asocaiated with the address, so we force add it with headers object
+        
+
+        //v2
+        const { data } = await axios.get('http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/users/currentuser', {
+            headers: req.headers //cookie passed , so auth service wldoes not distincts between the internal request and external from the browser
+        });
+                    
+
+
+
+        return data;
+    
+    }
+    else {
+        // we are on the browser
+        //req made with base url of ''
+        // const response = await axiso.get('api/users/currentuser');
+        const {data} = await axiso.get('api/users/currentuser');
+        
+        //{currentUser:{ email :}|| null}
+        return  data;
+
+    }
+    return {};
+        // from v1 
+    // return response.data;
+}
+*/
+
+//final refactor 
+import buildClient from '../api/build-client';
+
+const LandingPage = ({ currentUser }) => {
+  return currentUser ? (
+    <h1>You are signed in</h1>
+  ) : (
+    <h1>You are NOT signed in</h1>
+  );
+};
+
+//context,currentUser passed above
+//v1 was instead of context , {req}, so rather destructure give the whole thing named context, so req, was found in context.req,
+
+// the first arg in getInitialProps is named context
+
+LandingPage.getInitialProps = async (context) => {
+
+    
+    console.log('landing page');
+  const client = buildClient(context);
+  const { data } = await client.get('/api/users/currentuser');
+  return data;
+};
+
+//if we have the above logic in the _app side this logic here wont be invoked anymore even if it's present
+//this is due to next,but there is a fix , we will take the above and manually invoked it from _app so we fetch 2 sets of data one for the _app one for the page
+
+
+export default LandingPage;
+
+

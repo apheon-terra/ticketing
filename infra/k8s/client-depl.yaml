@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: eu.gcr.io/ticketing-dev-296116/client
+          # env: 
+          #   - name: JWT_KEY #INSIDE OF AUTH APP
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: jwt-secret
+          #         key: JWT_KEY
+          #         #If you load in scaffold some uncofig secret key kube wont load the pod
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-srv
+spec:
+  selector:
+    app: client
+  ports:
+    - name: client # lgo and report purpose
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

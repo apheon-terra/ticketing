@@ -1,0 +1,54 @@
+// import 'bootstrap/dist/css/bootstrap.css';//guaranteed only place to load resources when loads the app
+
+//v1
+// export default ({ Component, pageProps }) => {
+//     return <Component {...pageProps} />;
+// }
+
+//v2
+import 'bootstrap/dist/css/bootstrap.css';
+import buildClient from '../api/build-client';
+
+
+const AppComponent = ({ Component, pageProps, currentUser }) => {
+  return (
+      <div>
+        <hi>{currentUser.email}</hi>
+        <Header currentUser={currentUser} />
+      <Component {...pageProps} />
+    </div>
+  );
+};
+
+
+
+//page Component getInitialProps first argument is context==={req,res}
+
+//custom App components getInitialProps  first argument has a bit of different structure  context=== {Component,ctx:{req,res} } so you go to context.ctx for the whole req/res thing
+//appContext is different than the context from landing page
+AppComponent.getInitialProps = async (appContext) => {
+
+
+    console.log(appContext)//>>a big big data object dump of keys and values including Component : fucntion LandingPage -> getInitialProps
+    //verify the keys
+
+    console.log(Object.keys(appContext));//you will log out the properties AppTree , Component, router and ctx
+    // return {}
+  const client = buildClient(appContext.ctx);
+  const { data } = await client.get('/api/users/currentuser');
+    console.log(data);//>>current user dumped id ,email, iat
+  
+    let pageProps = {};//to fial gracefully as empty object rather then undefined
+    //if is defined then
+    if (appContext.Component.getInitialProps) {
+    pageProps = await appContext.Component.getInitialProps(appContext.ctx);
+  }
+    console.log(pageProps)//>>currentUser -> id email iad
+  
+      return {
+    pageProps,
+    ...data,/*as known as currentUser: data.currentUser*/
+  };//the whole thing will show as props in appComponent above
+};
+
+export default AppComponent;

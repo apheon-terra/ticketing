@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tickets-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tickets
+  template:
+    metadata:
+      labels:
+        app: tickets
+    spec:
+      containers:
+        - name: tickets
+          image: eu.gcr.io/ticketing-dev-296116/tickets
+          env: 
+            - name: NATS_URL
+              value: 'http://nats-srv:4222'
+            - name: NATS_CLUSTER_ID
+              value: 'ticketing'
+            - name: NATS_CLIENT_ID # unique 
+              valueFrom: # unique solution
+                fieldRef:
+                  fieldPath: metadata.name # match the id of the client to an actual running copy of our ticket services , name of the pod as a solution
+            - name: MONGO_URI
+              value: 'mongodb://tickets-mongo-srv:27017/tickets' # hardcoded URI
+            - name: JWT_KEY #INSIDE OF tickets APP
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+                  #If you load in scaffold some uncofig secret key kube wont load the pod
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-srv
+spec:
+  selector:
+    app: tickets
+  ports:
+    - name: tickets
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
